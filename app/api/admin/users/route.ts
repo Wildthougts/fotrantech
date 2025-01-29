@@ -21,8 +21,8 @@ async function checkAdminAccess() {
 }
 
 export async function GET() {
-  const user = await currentUser();
   try {
+    const user = await currentUser();
     if (!user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
@@ -44,18 +44,22 @@ export async function GET() {
     return NextResponse.json(users);
   } catch (error) {
     console.error('Error in GET /api/admin/users:', error);
-    await logAction('error', 'read', 'users', 'Error fetching users', {
-      userId: user?.id,
-      metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
-    });
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const isAdmin = await checkAdminAccess();
-    if (!isAdmin) {
+    const user = await currentUser();
+    if (!user) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const isCurrentUserAdmin = await isAdmin(user.id);
+    if (!isCurrentUserAdmin) {
+      await logAction('warn', 'create', 'admin_users', 'Unauthorized attempt to add admin', {
+        userId: user.id
+      });
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -72,9 +76,17 @@ export async function POST(request: Request) {
       .insert([{ user_id: userId }]);
 
     if (error) {
-      console.error('Error adding admin user:', error);
+      await logAction('error', 'create', 'admin_users', 'Error adding admin user', {
+        userId: user.id,
+        metadata: { error: error.message }
+      });
       return new NextResponse('Internal Server Error', { status: 500 });
     }
+
+    await logAction('info', 'create', 'admin_users', 'Admin user added successfully', {
+      userId: user.id,
+      metadata: { targetUserId: userId }
+    });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
@@ -85,15 +97,23 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const isAdmin = await checkAdminAccess();
-    if (!isAdmin) {
+    const user = await currentUser();
+    if (!user) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const isCurrentUserAdmin = await isAdmin(user.id);
+    if (!isCurrentUserAdmin) {
+      await logAction('warn', 'delete', 'admin_users', 'Unauthorized attempt to remove admin', {
+        userId: user.id
+      });
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('id');
+    const targetUserId = searchParams.get('id');
 
-    if (!userId) {
+    if (!targetUserId) {
       return new NextResponse('User ID is required', { status: 400 });
     }
 
@@ -101,12 +121,20 @@ export async function DELETE(request: Request) {
     const { error } = await supabase
       .from('admin_users')
       .delete()
-      .eq('user_id', userId);
+      .eq('user_id', targetUserId);
 
     if (error) {
-      console.error('Error removing admin user:', error);
+      await logAction('error', 'delete', 'admin_users', 'Error removing admin user', {
+        userId: user.id,
+        metadata: { error: error.message }
+      });
       return new NextResponse('Internal Server Error', { status: 500 });
     }
+
+    await logAction('info', 'delete', 'admin_users', 'Admin user removed successfully', {
+      userId: user.id,
+      metadata: { targetUserId }
+    });
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

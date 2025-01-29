@@ -1,4 +1,4 @@
-import { User } from '@clerk/nextjs/server';
+import { getAuth } from '@clerk/nextjs/server';
 import { isAdmin } from './admin';
 
 export interface ClerkUser {
@@ -13,12 +13,18 @@ export interface ClerkUser {
 export async function getClerkUsers(): Promise<ClerkUser[]> {
   try {
     // Use clerk-sdk-node to get users
-    const users = await fetch('https://api.clerk.com/v1/users', {
+    const response = await fetch('https://api.clerk.com/v1/users', {
       headers: {
         'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
-    }).then(res => res.json());
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch users from Clerk');
+    }
+
+    const users = await response.json();
     
     // Get admin status for all users
     const adminStatuses = await Promise.all(

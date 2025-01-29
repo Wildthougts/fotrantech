@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Service } from '@/utils/supabase';
+import { Service } from '@/utils/services';
 import toast from 'react-hot-toast';
 import AdminServiceCard from './components/AdminServiceCard';
 import AddServiceModal from './components/AddServiceModal';
@@ -13,12 +13,12 @@ export default function AdminServicesPage() {
 
   useEffect(() => {
     fetchServices();
-  }, []); // Fetch on component mount
+  }, []);
 
   const fetchServices = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/admin/services'); // Updated to use admin endpoint
+      const response = await fetch('/api/admin/services');
       if (!response.ok) throw new Error('Failed to fetch services');
       const data = await response.json();
       setServices(data);
@@ -30,7 +30,7 @@ export default function AdminServicesPage() {
     }
   };
 
-  const handleAddService = async (serviceData: Omit<Service, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleAddService = async (serviceData: Omit<Service, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) => {
     try {
       const response = await fetch('/api/admin/services', {
         method: 'POST',
@@ -40,14 +40,17 @@ export default function AdminServicesPage() {
         body: JSON.stringify(serviceData),
       });
 
-      if (!response.ok) throw new Error('Failed to add service');
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
       
       await fetchServices();
       setIsAddModalOpen(false);
       toast.success('Service added successfully');
     } catch (error) {
       console.error('Error adding service:', error);
-      toast.error('Failed to add service');
+      toast.error(error instanceof Error ? error.message : 'Failed to add service');
     }
   };
 

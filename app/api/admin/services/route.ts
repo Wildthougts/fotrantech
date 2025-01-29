@@ -4,7 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { logAction } from '@/utils/logger';
 import { rateLimit } from '@/middleware/rateLimit';
 import { isAdmin } from '@/utils/admin';
-import { deleteService } from '@/utils/services';
+import { deleteService, createService } from '@/utils/services';
 
 async function checkAdminAccess() {
   const user = await currentUser();
@@ -161,6 +161,46 @@ export async function PATCH(request: Request) {
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error in PATCH /api/admin/services:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
+    if (!isUserAdmin) {
+      if (userId) {
+        await logAction('warn', 'create', 'services', 'Unauthorized create attempt', {
+          userId
+        });
+      }
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    if (!userId) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const serviceData = await request.json();
+
+    try {
+      const newService = await createService(serviceData);
+      
+      await logAction('info', 'create', 'services', 'Service successfully created', {
+        userId,
+        resourceId: newService.id
+      });
+
+      return NextResponse.json(newService);
+    } catch (error) {
+      await logAction('error', 'create', 'services', 'Error creating service', {
+        userId,
+        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
+      return new NextResponse('Failed to create service', { status: 500 });
+    }
+  } catch (error) {
+    console.error('Error in POST /api/admin/services:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

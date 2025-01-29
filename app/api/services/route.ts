@@ -2,19 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { supabase } from "@/utils/supabase";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
+    // Only fetch active and non-deleted services
     const { data: services, error } = await supabase
-      .from("services")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .from('services')
+      .select('*')
+      .eq('is_active', true)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching services:', error);
+      return new NextResponse('Internal Server Error', { status: 500 });
+    }
 
     return NextResponse.json(services);
   } catch (error) {
-    console.error("Error fetching services:", error);
-    return NextResponse.json({ error: "Error fetching services" }, { status: 500 });
+    console.error('Error in GET /api/services:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
