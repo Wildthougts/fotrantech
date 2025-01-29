@@ -1,14 +1,28 @@
 import { NextResponse } from 'next/server';
-import { Redis } from '@upstash/redis';
 
 const ADMIN_RATE_LIMIT = 100; // requests per window
-const WINDOW_SIZE = 60 * 60; // 1 hour in seconds
+const WINDOW_SIZE = 60 * 60 * 1000; // 1 hour in milliseconds
 
-// Initialize Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-});
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+// In-memory store for rate limiting
+const rateLimitStore = new Map<string, RateLimitEntry>();
+
+// Cleanup function to remove expired entries
+function cleanup() {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitStore.entries()) {
+    if (now >= entry.resetTime) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
+
+// Run cleanup every 5 minutes
+setInterval(cleanup, 5 * 60 * 1000);
 
 export async function rateLimit(userId: string, action: string): Promise<{
   success: boolean;
@@ -19,15 +33,26 @@ export async function rateLimit(userId: string, action: string): Promise<{
   }
 
   const key = `rate_limit:${action}:${userId}`;
+  const now = Date.now();
   
   try {
-    const [count] = await redis
-      .pipeline()
-      .incr(key)
-      .expire(key, WINDOW_SIZE)
-      .exec();
+    // Clean up expired entry if exists
+    const existingEntry = rateLimitStore.get(key);
+    if (existingEntry && now >= existingEntry.resetTime) {
+      rateLimitStore.delete(key);
+    }
 
-    const remaining = ADMIN_RATE_LIMIT - (count as number);
+    // Get or create entry
+    const entry = rateLimitStore.get(key) || {
+      count: 0,
+      resetTime: now + WINDOW_SIZE
+    };
+
+    // Increment count
+    entry.count += 1;
+    rateLimitStore.set(key, entry);
+
+    const remaining = ADMIN_RATE_LIMIT - entry.count;
     
     return {
       success: remaining > 0,
@@ -35,7 +60,7 @@ export async function rateLimit(userId: string, action: string): Promise<{
     };
   } catch (error) {
     console.error('Rate limiting error:', error);
-    // Fail open in case of Redis errors
+    // Fail open in case of errors
     return { success: true, remaining: ADMIN_RATE_LIMIT };
   }
 } 

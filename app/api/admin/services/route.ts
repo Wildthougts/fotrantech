@@ -3,6 +3,8 @@ import { supabase } from '@/utils/supabase';
 import { currentUser } from '@clerk/nextjs/server';
 import { logAction } from '@/utils/logger';
 import { rateLimit } from '@/middleware/rateLimit';
+import { isAdmin } from '@/utils/admin';
+import { deleteService } from '@/utils/services';
 
 async function checkAdminAccess() {
   const user = await currentUser();
@@ -10,19 +12,14 @@ async function checkAdminAccess() {
     return { isAdmin: false, userId: undefined };
   }
 
-  const { data: adminUser } = await supabase
-    .from('admin_users')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-  return { isAdmin: !!adminUser, userId: user.id };
+  const isUserAdmin = await isAdmin(user.id);
+  return { isAdmin: isUserAdmin, userId: user.id };
 }
 
 export async function GET() {
   try {
-    const { isAdmin, userId } = await checkAdminAccess();
-    if (!isAdmin) {
+    const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
+    if (!isUserAdmin) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -57,8 +54,8 @@ export async function GET() {
 
 export async function DELETE(request: Request) {
   try {
-    const { isAdmin, userId } = await checkAdminAccess();
-    if (!isAdmin) {
+    const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
+    if (!isUserAdmin) {
       if (userId) {
         await logAction('warn', 'delete', 'services', 'Unauthorized delete attempt', {
           userId
@@ -91,30 +88,23 @@ export async function DELETE(request: Request) {
       return new NextResponse('Service ID is required', { status: 400 });
     }
 
-    // Soft delete the service
-    const { error } = await supabase
-      .from('services')
-      .update({ 
-        deleted_at: new Date().toISOString(),
-        is_active: false 
-      })
-      .eq('id', serviceId);
+    try {
+      await deleteService(serviceId);
+      
+      await logAction('info', 'delete', 'services', 'Service successfully deleted', {
+        userId,
+        resourceId: serviceId
+      });
 
-    if (error) {
+      return new NextResponse(null, { status: 204 });
+    } catch (error) {
       await logAction('error', 'delete', 'services', 'Error deleting service', {
         userId,
         resourceId: serviceId,
-        metadata: { error: error.message }
+        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
       });
-      return new NextResponse('Internal Server Error', { status: 500 });
+      return new NextResponse('Failed to delete service', { status: 500 });
     }
-
-    await logAction('info', 'delete', 'services', 'Service successfully deleted', {
-      userId,
-      resourceId: serviceId
-    });
-
-    return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Error in DELETE /api/admin/services:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
@@ -123,8 +113,8 @@ export async function DELETE(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { isAdmin, userId } = await checkAdminAccess();
-    if (!isAdmin) {
+    const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
+    if (!isUserAdmin) {
       if (userId) {
         await logAction('warn', 'update', 'services', 'Unauthorized update attempt', {
           userId

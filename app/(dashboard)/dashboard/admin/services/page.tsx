@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Service } from '@/utils/supabase';
 import toast from 'react-hot-toast';
 import AdminServiceCard from './components/AdminServiceCard';
@@ -11,9 +11,14 @@ export default function AdminServicesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    fetchServices();
+  }, []); // Fetch on component mount
+
   const fetchServices = async () => {
     try {
-      const response = await fetch('/api/services');
+      setIsLoading(true);
+      const response = await fetch('/api/admin/services'); // Updated to use admin endpoint
       if (!response.ok) throw new Error('Failed to fetch services');
       const data = await response.json();
       setServices(data);
@@ -27,7 +32,7 @@ export default function AdminServicesPage() {
 
   const handleAddService = async (serviceData: Omit<Service, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const response = await fetch('/api/services', {
+      const response = await fetch('/api/admin/services', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,8 +53,8 @@ export default function AdminServicesPage() {
 
   const handleToggleStatus = async (serviceId: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/services/${serviceId}`, {
-        method: 'PUT',
+      const response = await fetch(`/api/admin/services?id=${serviceId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -70,7 +75,7 @@ export default function AdminServicesPage() {
     if (!confirm('Are you sure you want to delete this service?')) return;
 
     try {
-      const response = await fetch(`/api/services/${serviceId}`, {
+      const response = await fetch(`/api/admin/services?id=${serviceId}`, {
         method: 'DELETE',
       });
 
@@ -85,7 +90,7 @@ export default function AdminServicesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Manage Services</h1>
         <button

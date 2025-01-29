@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabase';
 import { currentUser } from '@clerk/nextjs/server';
+import { isAdmin } from '@/utils/admin';
+import { getClerkUsers } from '@/utils/clerk';
+import { logAction } from '@/utils/logger';
 
 async function checkAdminAccess() {
   const user = await currentUser();
@@ -18,46 +21,33 @@ async function checkAdminAccess() {
 }
 
 export async function GET() {
+  const user = await currentUser();
   try {
-    const isAdmin = await checkAdminAccess();
-    if (!isAdmin) {
+    if (!user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // Get users from Clerk API
-    const response = await fetch('https://api.clerk.com/v1/users', {
-      headers: {
-        'Authorization': `Bearer ${process.env.CLERK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch users from Clerk');
+    const isCurrentUserAdmin = await isAdmin(user.id);
+    if (!isCurrentUserAdmin) {
+      await logAction('warn', 'read', 'users', 'Unauthorized attempt to fetch users', {
+        userId: user.id
+      });
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const clerkUsers = await response.json();
+    const users = await getClerkUsers();
 
-    // Get admin users from Supabase
-    const { data: adminUsers } = await supabase
-      .from('admin_users')
-      .select('user_id');
-
-    const adminUserIds = new Set(adminUsers?.map(admin => admin.user_id) || []);
-
-    // Combine Clerk user data with admin status
-    const users = clerkUsers.map((user: any) => ({
-      id: user.id,
-      email: user.email_addresses?.[0]?.email_address || '',
-      firstName: user.first_name,
-      lastName: user.last_name,
-      createdAt: user.created_at,
-      isAdmin: adminUserIds.has(user.id)
-    }));
+    await logAction('info', 'read', 'users', 'Successfully fetched users', {
+      userId: user.id
+    });
 
     return NextResponse.json(users);
   } catch (error) {
     console.error('Error in GET /api/admin/users:', error);
+    await logAction('error', 'read', 'users', 'Error fetching users', {
+      userId: user?.id,
+      metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+    });
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
