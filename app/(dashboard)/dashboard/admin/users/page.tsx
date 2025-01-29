@@ -2,25 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { FiUserPlus, FiUserMinus, FiRefreshCw } from 'react-icons/fi';
 
-interface UserService {
-  user_id: string;
-  services: Array<{
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    is_active: boolean;
-  }>;
+interface User {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  createdAt: Date;
+  isAdmin: boolean;
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserService[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin');
+      setIsLoading(true);
+      const response = await fetch('/api/admin/users');
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
       setUsers(data);
@@ -36,137 +36,121 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  const handleToggleService = async (userId: string, serviceId: string, currentStatus: string) => {
+  const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
     try {
-      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-      const response = await fetch('/api/admin', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          service_id: serviceId,
-          status: newStatus,
-        }),
-      });
+      const response = await fetch(
+        `/api/admin/users${isCurrentlyAdmin ? `?id=${userId}` : ''}`,
+        {
+          method: isCurrentlyAdmin ? 'DELETE' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: isCurrentlyAdmin ? undefined : JSON.stringify({ userId }),
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to update service status');
-      
-      await fetchUsers();
-      toast.success('Service status updated');
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Failed to ${isCurrentlyAdmin ? 'remove' : 'add'} admin`);
+      }
+
+      toast.success(`Successfully ${isCurrentlyAdmin ? 'removed' : 'added'} admin role`);
+      fetchUsers();
     } catch (error) {
-      console.error('Error updating service status:', error);
-      toast.error('Failed to update service status');
+      console.error('Error toggling admin status:', error);
+      toast.error(`Failed to ${isCurrentlyAdmin ? 'remove' : 'add'} admin role`);
     }
   };
 
-  const handleDeleteService = async (userId: string, serviceId: string) => {
-    if (!confirm('Are you sure you want to delete this service from the user?')) return;
-
-    try {
-      const response = await fetch(`/api/admin?user_id=${userId}&service_id=${serviceId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete service');
-      
-      await fetchUsers();
-      toast.success('Service deleted successfully');
-    } catch (error) {
-      console.error('Error deleting service:', error);
-      toast.error('Failed to delete service');
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Manage Users</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Manage Users</h1>
+        <button
+          onClick={fetchUsers}
+          className="inline-flex items-center px-3 py-1 rounded text-sm font-medium text-gray-700 hover:text-gray-900"
+        >
+          <FiRefreshCw className="w-4 h-4 mr-1" />
+          Refresh
+        </button>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-500">Loading users...</p>
-        </div>
-      ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
+      <div className="bg-white shadow overflow-hidden rounded-lg">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                User
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Joined
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
             {users.map((user) => (
-              <li key={user.user_id} className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900">User ID: {user.user_id}</h3>
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {user.firstName} {user.lastName}
                   </div>
-                  
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-500">Services</h4>
-                    <div className="mt-2 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {user.services.map((service) => (
-                        <div
-                          key={service.id}
-                          className="bg-gray-50 p-4 rounded-lg border border-gray-200"
-                        >
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-sm font-medium text-gray-900">
-                              {service.name}
-                            </h5>
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                service.is_active
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}
-                            >
-                              {service.is_active ? 'Active' : 'Inactive'}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-sm text-gray-500">
-                            {service.description}
-                          </p>
-                          <div className="mt-4 flex space-x-2">
-                            <button
-                              onClick={() =>
-                                handleToggleService(
-                                  user.user_id,
-                                  service.id,
-                                  service.is_active ? 'active' : 'inactive'
-                                )
-                              }
-                              className="flex-1 inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            >
-                              {service.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDeleteService(user.user_id, service.id)
-                              }
-                              className="flex-1 inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {user.services.length === 0 && (
-                        <p className="text-sm text-gray-500 col-span-full">
-                          No services found for this user.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </li>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-500">{user.email}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
+                    className={`inline-flex items-center px-3 py-1 rounded text-sm font-medium ${
+                      user.isAdmin
+                        ? 'text-red-700 hover:text-red-900'
+                        : 'text-green-700 hover:text-green-900'
+                    }`}
+                  >
+                    {user.isAdmin ? (
+                      <>
+                        <FiUserMinus className="w-4 h-4 mr-1" />
+                        Remove Admin
+                      </>
+                    ) : (
+                      <>
+                        <FiUserPlus className="w-4 h-4 mr-1" />
+                        Make Admin
+                      </>
+                    )}
+                  </button>
+                </td>
+              </tr>
             ))}
             {users.length === 0 && (
-              <li className="p-6 text-center text-gray-500">
-                No users found.
-              </li>
+              <tr>
+                <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                  No users found.
+                </td>
+              </tr>
             )}
-          </ul>
-        </div>
-      )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 } 
