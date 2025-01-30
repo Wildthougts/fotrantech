@@ -1,25 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { supabase } from "@/utils/supabase";
-import crypto from "crypto";
+import { CryptomusClient } from "@/utils/cryptomus";
 
-const CRYPTOMUS_API_KEY = process.env.CRYPTOMUS_API_KEY!;
-const CRYPTOMUS_MERCHANT_ID = process.env.CRYPTOMUS_MERCHANT_ID!;
-
-function generatePaymentSignature(payload: any) {
-  const sortedParams = Object.keys(payload)
-    .sort()
-    .reduce((acc: any, key) => {
-      acc[key] = payload[key];
-      return acc;
-    }, {});
-
-  const concatenatedString = JSON.stringify(sortedParams);
-  return crypto
-    .createHash("md5")
-    .update(concatenatedString + CRYPTOMUS_API_KEY)
-    .digest("hex");
+if (!process.env.CRYPTOMUS_MERCHANT_ID || !process.env.CRYPTOMUS_PAYMENT_KEY) {
+  throw new Error('Cryptomus credentials are not configured');
 }
+
+const cryptomusClient = new CryptomusClient(
+  process.env.CRYPTOMUS_MERCHANT_ID,
+  process.env.CRYPTOMUS_PAYMENT_KEY
+);
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,13 +20,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { service_id } = body;
+    const { serviceId } = body;
 
     // Get service details
     const { data: service, error: serviceError } = await supabase
       .from("services")
       .select("*")
-      .eq("id", service_id)
+      .eq("id", serviceId)
       .single();
 
     if (serviceError || !service) {
@@ -43,55 +34,47 @@ export async function POST(req: NextRequest) {
     }
 
     // Create payment request to Cryptomus
-    const paymentPayload = {
+    const orderId = `${userId}_${serviceId}_${Date.now()}`;
+    const paymentResponse = await cryptomusClient.createPayment({
       amount: service.price.toString(),
       currency: "USD",
-      order_id: `${userId}_${service_id}_${Date.now()}`,
-      url_return: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      url_callback: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/webhook`,
-    };
-
-    const signature = generatePaymentSignature(paymentPayload);
-
-    const response = await fetch("https://api.cryptomus.com/v1/payment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "merchant": CRYPTOMUS_MERCHANT_ID,
-        "sign": signature,
-      },
-      body: JSON.stringify(paymentPayload),
+      orderId,
+      urlReturn: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      urlCallback: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/webhook`,
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to create payment");
-    }
-
-    const paymentData = await response.json();
-
-    // Create payment record
+    // Create payment record in database
     const { data: payment, error: paymentError } = await supabase
       .from("payments")
-      .insert([{
-        user_id: userId,
-        service_id,
-        amount: service.price,
-        status: "pending",
-        payment_method: "crypto",
-        transaction_id: paymentData.payment_id,
-      }])
+      .insert([
+        {
+          user_id: userId,
+          service_id: serviceId,
+          amount: service.price,
+          currency: "USD",
+          status: "pending",
+          payment_method: "crypto",
+          payment_id: paymentResponse.result.uuid,
+          order_id: orderId,
+        },
+      ])
       .select()
       .single();
 
-    if (paymentError) throw paymentError;
+    if (paymentError) {
+      throw paymentError;
+    }
 
     return NextResponse.json({
-      payment_url: paymentData.url,
+      payment_url: paymentResponse.result.url,
       payment_id: payment.id,
     });
   } catch (error) {
     console.error("Error creating payment:", error);
-    return NextResponse.json({ error: "Error creating payment" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create payment" },
+      { status: 500 }
+    );
   }
 }
 
@@ -99,26 +82,38 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    const { payment_id, order_id, status } = body;
+    const { payment_status, order_id, uuid } = body;
 
-    const [userId, service_id] = order_id.split("_");
+    // Verify the payment status with Cryptomus
+    const paymentInfo = await cryptomusClient.checkPaymentStatus(uuid);
+    
+    if (paymentInfo.result.status !== payment_status) {
+      return NextResponse.json(
+        { error: "Invalid payment status" },
+        { status: 400 }
+      );
+    }
+
+    const [userId, serviceId] = order_id.split("_");
 
     // Update payment status
     const { error: paymentError } = await supabase
       .from("payments")
-      .update({ status })
-      .eq("transaction_id", payment_id);
+      .update({ status: payment_status })
+      .eq("payment_id", uuid);
 
     if (paymentError) throw paymentError;
 
-    // If payment is successful, update user service status
-    if (status === "paid") {
+    // If payment is successful, create or update user service
+    if (payment_status === "paid") {
       const { error: serviceError } = await supabase
         .from("user_services")
-        .update({ status: "active" })
-        .eq("user_id", userId)
-        .eq("service_id", service_id)
-        .eq("status", "pending_payment");
+        .upsert({
+          user_id: userId,
+          service_id: serviceId,
+          status: "active",
+          start_date: new Date().toISOString(),
+        });
 
       if (serviceError) throw serviceError;
     }
@@ -126,6 +121,9 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error processing webhook:", error);
-    return NextResponse.json({ error: "Error processing webhook" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error processing webhook" },
+      { status: 500 }
+    );
   }
 } 
