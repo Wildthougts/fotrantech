@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Service } from '@/utils/services';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { Service } from "@/utils/services";
+import toast from "react-hot-toast";
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
@@ -15,13 +15,13 @@ export default function ServicesPage() {
   const fetchServices = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/services');
-      if (!response.ok) throw new Error('Failed to fetch services');
+      const response = await fetch("/api/services");
+      if (!response.ok) throw new Error("Failed to fetch services");
       const data = await response.json();
       setServices(data);
     } catch (error) {
-      console.error('Error fetching services:', error);
-      toast.error('Failed to load services');
+      console.error("Error fetching services:", error);
+      toast.error("Failed to load services");
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +38,9 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-semibold text-gray-900">Available Services</h1>
+      <h1 className="text-2xl font-semibold text-gray-900">
+        Available Services
+      </h1>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => (
@@ -48,19 +50,23 @@ export default function ServicesPage() {
           >
             <div className="space-y-4">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{service.name}</h2>
-                <p className="mt-1 text-lg font-medium text-indigo-600">${service.price}</p>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {service.name}
+                </h2>
+                <p className="mt-1 text-lg font-medium text-indigo-600">
+                  ${service.price}
+                </p>
               </div>
-              
+
               <p className="text-gray-500">{service.description}</p>
 
-              {service.image_url && (
+              {/* {service.image_url && (
                 <img
                   src={service.image_url}
                   alt={service.name}
                   className="w-full h-48 object-cover rounded-md"
                 />
-              )}
+              )} */}
 
               {service.youtube_url && (
                 <div className="aspect-w-16 aspect-h-9">
@@ -75,7 +81,7 @@ export default function ServicesPage() {
 
               <button
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() => toast.success('This feature is coming soon!')}
+                onClick={() => toast.success("This feature is coming soon!")}
               >
                 Subscribe
               </button>
@@ -90,4 +96,4 @@ export default function ServicesPage() {
       </div>
     </div>
   );
-} 
+}
