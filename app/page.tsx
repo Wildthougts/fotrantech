@@ -7,7 +7,7 @@ import TestimonialSlider from "@/app/components/TestimonialSlider";
 
 export default async function LandingPage() {
   const { userId } = await auth();
-  
+
   if (userId) {
     redirect("/dashboard");
   }
@@ -26,7 +26,9 @@ export default async function LandingPage() {
                 height={40}
                 className="animate-fade-in"
               />
-              <span className="ml-2 text-xl font-bold text-gray-900">FT Dashboard</span>
+              <span className="ml-2 text-xl font-bold text-gray-900">
+                FT Dashboard
+              </span>
             </div>
             <SignInButton>
               <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors duration-200">
@@ -45,7 +47,8 @@ export default async function LandingPage() {
               Built For Artists
             </h1>
             <p className="text-xl text-gray-600 mb-8 animate-fade-in-up animation-delay-200">
-              We provide you the best tools to promote your music with streaming.
+              We provide you the best tools to promote your music with
+              streaming.
             </p>
             <div className="flex justify-center space-x-4 animate-fade-in-up animation-delay-400">
               <SignInButton>
@@ -71,7 +74,8 @@ export default async function LandingPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Secure and Fast</h3>
               <p className="text-gray-600">
-                Our platform ensures your data is protected while delivering optimal performance.
+                Our platform ensures your data is protected while delivering
+                optimal performance.
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -80,7 +84,8 @@ export default async function LandingPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">24/7 Support</h3>
               <p className="text-gray-600">
-                Round-the-clock assistance to help you with any questions or concerns.
+                Round-the-clock assistance to help you with any questions or
+                concerns.
               </p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -99,11 +104,15 @@ export default async function LandingPage() {
       {/* Pricing Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Optimal Quality at Unbeatable Costs</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Optimal Quality at Unbeatable Costs
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="bg-[#0A0A0A] rounded-xl p-6 text-white">
               <h3 className="text-xl font-semibold mb-2">Spotify Win v1</h3>
-              <p className="text-gray-300 text-sm mb-4">Best for Spotify, 1M+ Daily Streams</p>
+              <p className="text-gray-300 text-sm mb-4">
+                Best for Spotify, 1M+ Daily Streams
+              </p>
               <div className="flex items-baseline mb-4">
                 <span className="text-3xl font-bold">$35.00</span>
                 <span className="text-gray-400 ml-2">/mo</span>
@@ -115,7 +124,9 @@ export default async function LandingPage() {
 
             <div className="bg-[#0A0A0A] rounded-xl p-6 text-white">
               <h3 className="text-xl font-semibold mb-2">Spotify Desktop</h3>
-              <p className="text-gray-300 text-sm mb-4">Desktop App for Streaming</p>
+              <p className="text-gray-300 text-sm mb-4">
+                Desktop App for Streaming
+              </p>
               <div className="flex items-baseline mb-4">
                 <span className="text-3xl font-bold">$49.00</span>
                 <span className="text-gray-400 ml-2">/mo</span>
@@ -126,8 +137,12 @@ export default async function LandingPage() {
             </div>
 
             <div className="bg-[#0A0A0A] rounded-xl p-6 text-white">
-              <h3 className="text-xl font-semibold mb-2">Spotify Desktop Creator</h3>
-              <p className="text-gray-300 text-sm mb-4">Advanced Desktop Features</p>
+              <h3 className="text-xl font-semibold mb-2">
+                Spotify Desktop Creator
+              </h3>
+              <p className="text-gray-300 text-sm mb-4">
+                Advanced Desktop Features
+              </p>
               <div className="flex items-baseline mb-4">
                 <span className="text-3xl font-bold">$49.00</span>
                 <span className="text-gray-400 ml-2">/mo</span>
@@ -147,25 +162,63 @@ export default async function LandingPage() {
             {/* Support Card */}
             <div className="relative">
               <div className="bg-[#0A0A0A] rounded-xl p-8 text-white relative z-10">
-                <h2 className="text-3xl font-bold mb-6">24/5 Exceptional Support</h2>
+                <h2 className="text-3xl font-bold mb-6">
+                  24/5 Exceptional Support
+                </h2>
                 <ul className="space-y-4">
                   <li className="flex items-start">
-                    <svg className="w-6 h-6 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-6 h-6 text-gray-400 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span className="ml-3">We'll answer your questions within 24hrs or less</span>
+                    <span className="ml-3">
+                      We&apos;ll answer your questions within 24hrs or less
+                    </span>
                   </li>
                   <li className="flex items-start">
-                    <svg className="w-6 h-6 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-6 h-6 text-gray-400 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span className="ml-3">Our team is ready to help you with any issues</span>
+                    <span className="ml-3">
+                      Our team is ready to help you with any issues
+                    </span>
                   </li>
                   <li className="flex items-start">
-                    <svg className="w-6 h-6 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-6 h-6 text-gray-400 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span className="ml-3">We'll ensure the functionality of all your plans</span>
+                    <span className="ml-3">
+                      We&apos; ll ensure the functionality of all your plans
+                    </span>
                   </li>
                 </ul>
                 <button className="mt-8 bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
@@ -178,25 +231,63 @@ export default async function LandingPage() {
             {/* Tools Card */}
             <div className="relative">
               <div className="bg-[#0A0A0A] rounded-xl p-8 text-white relative z-10">
-                <h2 className="text-3xl font-bold mb-6">Undetectable Tools with Distinctive Fingerprinting</h2>
+                <h2 className="text-3xl font-bold mb-6">
+                  Undetectable Tools with Distinctive Fingerprinting
+                </h2>
                 <ul className="space-y-4">
                   <li className="flex items-start">
-                    <svg className="w-6 h-6 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-6 h-6 text-gray-400 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span className="ml-3">Our tools get you the best results without detection</span>
+                    <span className="ml-3">
+                      Our tools get you the best results without detection
+                    </span>
                   </li>
                   <li className="flex items-start">
-                    <svg className="w-6 h-6 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-6 h-6 text-gray-400 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span className="ml-3">Unique fingerprinting for each session</span>
+                    <span className="ml-3">
+                      Unique fingerprinting for each session
+                    </span>
                   </li>
                   <li className="flex items-start">
-                    <svg className="w-6 h-6 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    <svg
+                      className="w-6 h-6 text-gray-400 mt-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span className="ml-3">Regular updates to maintain effectiveness</span>
+                    <span className="ml-3">
+                      Regular updates to maintain effectiveness
+                    </span>
                   </li>
                 </ul>
                 <button className="mt-8 bg-white text-black px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors">
@@ -212,7 +303,9 @@ export default async function LandingPage() {
       {/* Testimonials Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Meet our Happy Clients</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Meet our Happy Clients
+          </h2>
           <TestimonialSlider />
         </div>
       </section>
@@ -221,7 +314,9 @@ export default async function LandingPage() {
       <footer className="bg-white border-t py-12">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <p className="text-gray-600">© 2024 FT Dashboard. All rights reserved.</p>
+            <p className="text-gray-600">
+              © 2024 FT Dashboard. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
