@@ -3,17 +3,20 @@ import { getAuth } from "@clerk/nextjs/server";
 import { supabase } from "@/utils/supabase";
 import { CryptomusClient } from "@/utils/cryptomus";
 
-if (!process.env.CRYPTOMUS_MERCHANT_ID || !process.env.CRYPTOMUS_PAYMENT_KEY) {
-  throw new Error('Cryptomus credentials are not configured');
-}
-
-const cryptomusClient = new CryptomusClient(
-  process.env.CRYPTOMUS_MERCHANT_ID,
-  process.env.CRYPTOMUS_PAYMENT_KEY
-);
-
 export async function POST(req: NextRequest) {
   try {
+    if (
+      !process.env.CRYPTOMUS_MERCHANT_ID ||
+      !process.env.CRYPTOMUS_PAYMENT_KEY
+    ) {
+      throw new Error("Cryptomus credentials are not configured");
+    }
+
+    const cryptomusClient = new CryptomusClient(
+      process.env.CRYPTOMUS_MERCHANT_ID,
+      process.env.CRYPTOMUS_PAYMENT_KEY
+    );
+
     const { userId } = getAuth(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -81,12 +84,24 @@ export async function POST(req: NextRequest) {
 // Webhook handler for payment updates
 export async function PUT(req: NextRequest) {
   try {
+    if (
+      !process.env.CRYPTOMUS_MERCHANT_ID ||
+      !process.env.CRYPTOMUS_PAYMENT_KEY
+    ) {
+      throw new Error("Cryptomus credentials are not configured");
+    }
+
+    const cryptomusClient = new CryptomusClient(
+      process.env.CRYPTOMUS_MERCHANT_ID,
+      process.env.CRYPTOMUS_PAYMENT_KEY
+    );
+
     const body = await req.json();
     const { payment_status, order_id, uuid } = body;
 
     // Verify the payment status with Cryptomus
     const paymentInfo = await cryptomusClient.checkPaymentStatus(uuid);
-    
+
     if (paymentInfo.result.status !== payment_status) {
       return NextResponse.json(
         { error: "Invalid payment status" },
@@ -126,4 +141,4 @@ export async function PUT(req: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
