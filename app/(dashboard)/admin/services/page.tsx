@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
-import { Service } from '@/utils/services';
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { Service } from "@/utils/services";
 
 export default function AdminServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
@@ -14,12 +14,12 @@ export default function AdminServicesPage() {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('/api/admin/services');
-      if (!response.ok) throw new Error('Failed to fetch services');
+      const response = await fetch("/api/admin/services");
+      if (!response.ok) throw new Error("Failed to fetch services");
       const data = await response.json();
       setServices(data);
     } catch (error) {
-      toast.error('Error loading services');
+      toast.error("Error loading services");
       console.error(error);
     } finally {
       setLoading(false);
@@ -27,19 +27,19 @@ export default function AdminServicesPage() {
   };
 
   const deleteService = async (serviceId: string) => {
-    if (!confirm('Are you sure you want to delete this service?')) return;
-    
+    if (!confirm("Are you sure you want to delete this service?")) return;
+
     try {
       const response = await fetch(`/api/admin/services?id=${serviceId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
-      
-      if (!response.ok) throw new Error('Failed to delete service');
-      
-      toast.success('Service deleted successfully');
+
+      if (!response.ok) throw new Error("Failed to delete service");
+
+      toast.success("Service deleted successfully");
       fetchServices(); // Refresh the list
     } catch (error) {
-      toast.error('Error deleting service');
+      toast.error("Error deleting service");
       console.error(error);
     }
   };
@@ -76,21 +76,23 @@ export default function AdminServicesPage() {
                 Delete
               </button>
             </div>
-            
+
             <p className="text-gray-700 mb-4">{service.description}</p>
-            
+
             <div className="flex justify-between items-center text-sm text-gray-500">
-              <span>Status: {service.is_active ? 'Active' : 'Inactive'}</span>
-              <span>Created: {new Date(service.created_at).toLocaleDateString()}</span>
+              <span>Status: {service.is_active ? "Active" : "Inactive"}</span>
+              <span>
+                Created: {new Date(service.created_at).toLocaleDateString()}
+              </span>
             </div>
 
-            {service.image_url && (
+            {/* {service.image_url && (
               <img
                 src={service.image_url}
                 alt={service.name}
                 className="w-full h-40 object-cover mt-4 rounded"
               />
-            )}
+            )} */}
           </div>
         ))}
       </div>
@@ -102,4 +104,4 @@ export default function AdminServicesPage() {
       )}
     </div>
   );
-} 
+}

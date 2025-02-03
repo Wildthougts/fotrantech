@@ -14,7 +14,7 @@ async function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-0 flex-1 flex-col border-r border-gray-200 bg-white">
           <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
             <div className="flex flex-shrink-0 items-center px-4">
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Fotrantech</h1>
             </div>
             <nav className="mt-5 flex-1 space-y-1 bg-white px-2">
               <Link
@@ -58,7 +58,7 @@ async function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <div className="md:hidden">
         <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
-          <h1 className="text-lg font-medium">Dashboard</h1>
+          <h1 className="text-lg font-medium text-black">Fotrantech</h1>
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
@@ -97,12 +97,10 @@ async function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="md:pl-64">
-        <main className="py-6 px-4 sm:px-6 md:px-8">
-          {children}
-        </main>
+        <main className="py-6 px-4 sm:px-6 md:px-8">{children}</main>
       </div>
     </div>
   );
 }
 
-export default DashboardLayout; 
+export default DashboardLayout;
