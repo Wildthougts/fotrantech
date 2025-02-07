@@ -19,7 +19,7 @@ import toast from "react-hot-toast";
 // interface ServicesPage {}
 
 export default function ServicesPage() {
-  const ADMIN_WHATSAPP = "08148146620";
+  const ADMIN_WHATSAPP = "15033448496";
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

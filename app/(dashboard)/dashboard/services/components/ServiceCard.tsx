@@ -21,7 +21,7 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({ service }: ServiceCardProps) {
-  const ADMIN_WHATSAPP = "08148146620"; // Replace with your WhatsApp number
+  const ADMIN_WHATSAPP = "15033448496"; // Replace with your WhatsApp number
   const wallets = {
     BTC: "bc1q5w5z32u4rh9agjxq5869zjlta4l2suw3d33ugg",
     USDT: "TCcavsTNqxapcEnSv7UdWmxPm21efGRmTD",
