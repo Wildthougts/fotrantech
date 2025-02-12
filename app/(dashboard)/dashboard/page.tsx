@@ -1,24 +1,30 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { supabase } from "@/utils/supabase";
-import { FiActivity } from 'react-icons/fi';
-import { UserButton } from "@clerk/nextjs";
+import { FiActivity } from "react-icons/fi";
+import { SignIn, UserButton } from "@clerk/nextjs";
 import ContactBar from "@/app/components/ContactBar";
 import Link from "next/link";
 
 async function DashboardPage() {
   const user = await currentUser();
-  
+
   if (!user) {
-    return <div>Please sign in to view your dashboard.</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <SignIn />
+      </div>
+    );
   }
-  
+
   // Fetch user's active services
   const { data: userServices } = await supabase
     .from("user_services")
-    .select(`
+    .select(
+      `
       *,
       services (*)
-    `)
+    `
+    )
     .eq("user_id", user.id)
     .eq("status", "active");
 
@@ -46,7 +52,9 @@ async function DashboardPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Plans</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Active Plans
+                </p>
                 <h3 className="text-2xl font-bold text-gray-900 mt-1">
                   {userServices?.length || 0}
                 </h3>
@@ -62,7 +70,7 @@ async function DashboardPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Account</p>
                 <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                  {user.firstName || 'User'}
+                  {user.firstName || "User"}
                 </h3>
               </div>
               <div className="p-1">
@@ -75,7 +83,9 @@ async function DashboardPage() {
         {/* Active Services Section */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Active Services</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Active Services
+            </h2>
             <div className="mt-6">
               {userServices?.length ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -106,10 +116,13 @@ async function DashboardPage() {
               ) : (
                 <div>
                   <p className="text-center text-gray-500 mb-8">
-                    No active services found. Browse our services to get started.
+                    No active services found. Browse our services to get
+                    started.
                   </p>
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">Available Services</h3>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Available Services
+                    </h3>
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                       {availableServices?.map((service) => (
                         <div
@@ -148,7 +161,9 @@ async function DashboardPage() {
         {/* Recent Payments */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Payments</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Recent Payments
+            </h2>
             <div className="mt-6 overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -206,4 +221,4 @@ async function DashboardPage() {
   );
 }
 
-export default DashboardPage; 
+export default DashboardPage;
