@@ -1,17 +1,14 @@
-import { SignedIn, SignIn, UserButton } from "@clerk/nextjs";
+import { SignedIn, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { isAdmin } from "@/utils/admin";
 import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
 
   if (!user) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <SignIn />
-      </div>
-    );
+    redirect("https://accounts.fotrantech.app/sign-in");
   }
 
   const isAdminUser = await isAdmin(user.id);
