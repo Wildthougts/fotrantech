@@ -64,6 +64,7 @@ export default function ServicesPage() {
     BTC: "bc1q5w5z32u4rh9agjxq5869zjlta4l2suw3d33ugg",
     USDT: "TCcavsTNqxapcEnSv7UdWmxPm21efGRmTD",
     LTC: "ltc1q7v77e3grvs4sa8xwwry96u9mjytuad66lv4pja",
+    ETH: "0x8De8210Ec2b47b4D1e8aD6dd398B4d142E95406b",
   };
 
   return (
@@ -189,6 +190,26 @@ export default function ServicesPage() {
                           BTC
                         </Label>
                         <Input id="link" defaultValue={wallets.LTC} readOnly />
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="px-3"
+                        onClick={() => handleCopy(wallets.LTC)}
+                      >
+                        <span className="sr-only">Copy</span>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center mb-4 space-x-2">
+                      <div className="grid flex-1 gap-2">
+                        <Label className="text-center mb-4  text-xl">
+                          ETH Address
+                        </Label>
+                        <Label htmlFor="link" className="sr-only">
+                          ETH
+                        </Label>
+                        <Input id="link" defaultValue={wallets.ETH} readOnly />
                       </div>
                       <Button
                         type="button"
