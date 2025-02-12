@@ -95,7 +95,7 @@ export default function ServicesPage() {
                     {service.name}
                   </h2>
                   <p className="mt-1 text-lg font-medium text-indigo-600">
-                    ${service.price}
+                    ${service.price} /mo
                   </p>
                 </div>
 
