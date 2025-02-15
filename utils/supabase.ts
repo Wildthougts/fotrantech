@@ -8,9 +8,10 @@ if (
   throw new Error("Missing Supabase environment variables");
 }
 
+// Client-side Supabase instance
 export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   {
     auth: {
       persistSession: true,
@@ -18,6 +19,23 @@ export const supabase = createClient(
     },
   }
 );
+
+// Server-side Supabase instance creator
+export function createServerSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing Supabase environment variables");
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false, // Disable session persistence for server
+      autoRefreshToken: false,
+    },
+  });
+}
 
 // Test connection
 Promise.resolve(supabase.from("services").select("count", { count: "exact" }))
