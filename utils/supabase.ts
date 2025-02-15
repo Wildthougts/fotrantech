@@ -1,10 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-}
-if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-  throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
+if (
+  !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+) {
+  console.error("Missing Supabase environment variables");
+  throw new Error("Missing Supabase environment variables");
 }
 
 export const supabase = createClient(
@@ -17,6 +18,17 @@ export const supabase = createClient(
     },
   }
 );
+
+// Test connection
+Promise.resolve(supabase.from("services").select("count", { count: "exact" }))
+  .then(({ error }) => {
+    if (error) {
+      console.error("Supabase connection error:", error);
+    }
+  })
+  .catch((err) => {
+    console.error("Failed to connect to Supabase:", err);
+  });
 
 export type Service = {
   id: string;
@@ -59,21 +71,21 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function getServices() {
   const now = Date.now();
-  
+
   // Return cached data if it's still valid
-  if (servicesCache && (now - lastFetchTime) < CACHE_DURATION) {
+  if (servicesCache && now - lastFetchTime < CACHE_DURATION) {
     return servicesCache;
   }
 
   // Fetch fresh data
   const { data: services, error } = await supabase
-    .from('services')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
+    .from("services")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error('Error fetching services:', error);
+    console.error("Error fetching services:", error);
     return [];
   }
 
@@ -87,14 +99,14 @@ export async function getServices() {
 export async function getAllServices() {
   try {
     const { data, error } = await supabase
-      .from('services')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("services")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching all services:', error);
+    console.error("Error fetching all services:", error);
     throw error;
   }
 }
@@ -102,29 +114,32 @@ export async function getAllServices() {
 export async function deleteService(serviceId: string) {
   try {
     const { error } = await supabase
-      .from('services')
+      .from("services")
       .delete()
-      .eq('id', serviceId);
+      .eq("id", serviceId);
 
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error('Error deleting service:', error);
+    console.error("Error deleting service:", error);
     throw error;
   }
 }
 
-export async function updateServiceStatus(serviceId: string, isActive: boolean) {
+export async function updateServiceStatus(
+  serviceId: string,
+  isActive: boolean
+) {
   try {
     const { error } = await supabase
-      .from('services')
+      .from("services")
       .update({ is_active: isActive })
-      .eq('id', serviceId);
+      .eq("id", serviceId);
 
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error('Error updating service status:', error);
+    console.error("Error updating service status:", error);
     throw error;
   }
-} 
+}
