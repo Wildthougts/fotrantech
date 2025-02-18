@@ -16,18 +16,6 @@ async function DashboardPage() {
     );
   }
 
-  // Fetch user's active services
-  const { data: userServices } = await supabase
-    .from("user_services")
-    .select(
-      `
-      *,
-      services (*)
-    `
-    )
-    .eq("user_id", user.id)
-    .eq("status", "active");
-
   // Fetch recent payments
   const { data: recentPayments } = await supabase
     .from("payments")
@@ -36,7 +24,7 @@ async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  // Fetch available services if no active services
+  // Fetch available services
   const { data: availableServices } = await supabase
     .from("services")
     .select("*")
@@ -53,10 +41,10 @@ async function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Active Plans
+                  Available Services
                 </p>
                 <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                  {userServices?.length || 0}
+                  {availableServices?.length || 0}
                 </h3>
               </div>
               <div className="bg-blue-100 p-3 rounded-full">
@@ -80,85 +68,51 @@ async function DashboardPage() {
           </div>
         </div>
 
-        {/* Active Services Section */}
+        {/* Available Services Section */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-900">
-              Active Services
+              Available Services
             </h2>
             <div className="mt-6">
-              {userServices?.length ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {userServices.map((userService) => (
-                    <div
-                      key={userService.id}
-                      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
-                    >
-                      <div className="p-4">
-                        <h3 className="font-medium text-gray-900">
-                          {userService.services.name}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                          {userService.services.description}
-                        </p>
-                        <div className="mt-4 flex items-center justify-between">
-                          <span className="text-lg font-bold text-gray-900">
-                            ${userService.services.price}
-                          </span>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Active
-                          </span>
-                        </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {availableServices?.map((service) => (
+                  <div
+                    key={service.id}
+                    className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                  >
+                    <div className="p-4">
+                      <h3 className="font-medium text-gray-900">
+                        {service.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {service.description}
+                      </p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="text-lg font-bold text-gray-900">
+                          ${service.price}
+                        </span>
+                        <Link
+                          href="/services"
+                          className="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+                        >
+                          View Details
+                        </Link>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  <p className="text-center text-gray-500 mb-8">
-                    No active services found. Browse our services to get
-                    started.
-                  </p>
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      Available Services
-                    </h3>
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {availableServices?.map((service) => (
-                        <div
-                          key={service.id}
-                          className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200"
-                        >
-                          <div className="p-4">
-                            <h3 className="font-medium text-gray-900">
-                              {service.name}
-                            </h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                              {service.description}
-                            </p>
-                            <div className="mt-4 flex items-center justify-between">
-                              <span className="text-lg font-bold text-gray-900">
-                                ${service.price}
-                              </span>
-                              <Link
-                                href="/services"
-                                className="inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700"
-                              >
-                                View Details
-                              </Link>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                </div>
+                ))}
+              </div>
+              {(!availableServices || availableServices.length === 0) && (
+                <p className="text-center text-gray-500">
+                  No services available at the moment.
+                </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Recent Payments */}
+        {/* Recent Payments Section */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="p-6">
             <h2 className="text-lg font-semibold text-gray-900">
