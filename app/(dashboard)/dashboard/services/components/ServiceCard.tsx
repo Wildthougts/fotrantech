@@ -5,6 +5,7 @@ import { Service } from "@/utils/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({ service }: ServiceCardProps) {
+  const [quantity, setQuantity] = useState(1);
   const ADMIN_WHATSAPP = "15033448496"; // Replace with your WhatsApp number
   const wallets = {
     BTC: "bc1q5w5z32u4rh9agjxq5869zjlta4l2suw3d33ugg",
@@ -29,9 +31,17 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     ETH: "0x8De8210Ec2b47b4D1e8aD6dd398B4d142E95406b",
   };
 
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity >= 1) {
+      setQuantity(newQuantity);
+    }
+  };
+
+  const totalPrice = service.price * quantity;
+
   const handleContactAdmin = () => {
     const message = encodeURIComponent(
-      `Hello! I'd like to verify my payment for ${service.name} (${service.price} USD)`
+      `Hello! I'd like to verify my payment for ${service.name} (Quantity: ${quantity}, Total: $${totalPrice} USD)`
     );
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${message}`, "_blank");
   };
@@ -54,6 +64,32 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         <span className="text-gray-500 ml-2">/mo</span>
       </div>
 
+      <div className="flex items-center justify-between mb-4 p-2 bg-gray-50 rounded-md">
+        <Label>Quantity:</Label>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleQuantityChange(quantity - 1)}
+          >
+            -
+          </Button>
+          <span className="w-8 text-center">{quantity}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleQuantityChange(quantity + 1)}
+          >
+            +
+          </Button>
+        </div>
+      </div>
+
+      <div className="mb-4 text-right">
+        <span className="text-sm text-gray-600">Total: </span>
+        <span className="text-lg font-bold">${totalPrice}</span>
+      </div>
+
       <Dialog>
         <DialogTrigger asChild>
           <Button
@@ -69,8 +105,8 @@ export default function ServiceCard({ service }: ServiceCardProps) {
               Payment Invoice
             </DialogTitle>
             <DialogDescription>
-              To purchase {service.name} pay the total amount of $
-              {service.price} to any of the crypto wallet below and send
+              To purchase {service.name} (Quantity: {quantity}) pay the total
+              amount of ${totalPrice} to any of the crypto wallet below and send
               confirmation to the admin
             </DialogDescription>
           </DialogHeader>

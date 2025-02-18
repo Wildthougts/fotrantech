@@ -16,12 +16,16 @@ import { useEffect, useState } from "react";
 import { Service } from "@/utils/services";
 import toast from "react-hot-toast";
 
-// interface ServicesPage {}
-
 export default function ServicesPage() {
   const ADMIN_WHATSAPP = "15033448496";
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  type ServiceQuantity = {
+    [key: string]: number;
+  };
+
+  const [quantities, setQuantities] = useState<ServiceQuantity>({});
 
   useEffect(() => {
     fetchServices();
@@ -51,6 +55,15 @@ export default function ServicesPage() {
     }
   };
 
+  const handleQuantityChange = (serviceId: string, newQuantity: number) => {
+    if (newQuantity >= 1) {
+      setQuantities((prev) => ({
+        ...prev,
+        [serviceId]: newQuantity,
+      }));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="text-center py-12">
@@ -75,9 +88,12 @@ export default function ServicesPage() {
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {services.map((service) => {
+          const quantity = quantities[service.id] || 1;
+          const totalPrice = service.price * quantity;
+
           const handleContactAdmin = () => {
             const message = encodeURIComponent(
-              `Hello! I'd like to verify my payment for ${service.name} (${service.price} USD)`
+              `Hello! I'd like to verify my payment for ${service.name} (Quantity: ${quantity}, Total: $${totalPrice} USD)`
             );
             window.open(
               `https://wa.me/${ADMIN_WHATSAPP}?text=${message}`,
@@ -102,13 +118,35 @@ export default function ServicesPage() {
 
                 <p className="text-gray-500">{service.description}</p>
 
-                {/* {service.image_url && (
-                  <img
-                    src={service.image_url}
-                    alt={service.name}
-                    className="w-full h-48 object-cover rounded-md"
-                  />
-                )} */}
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                  <Label>Quantity:</Label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleQuantityChange(service.id, quantity - 1)
+                      }
+                    >
+                      -
+                    </Button>
+                    <span className="w-8 text-center">{quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleQuantityChange(service.id, quantity + 1)
+                      }
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-sm text-gray-600">Total: </span>
+                  <span className="text-lg font-bold">${totalPrice}</span>
+                </div>
 
                 {service.youtube_url && (
                   <div className="aspect-w-16 aspect-h-9">
@@ -136,9 +174,9 @@ export default function ServicesPage() {
                         Payment Invoice
                       </DialogTitle>
                       <DialogDescription>
-                        To purchase {service.name} pay the total amount of $
-                        {service.price} to any of the crypto wallet below and
-                        send confirmation to the admin
+                        To purchase {service.name} (Quantity: {quantity}) pay
+                        the total amount of ${totalPrice} to any of the crypto
+                        wallet below and send confirmation to the admin
                       </DialogDescription>
                     </DialogHeader>
                     <div className="flex items-center mb-4 space-x-2">
