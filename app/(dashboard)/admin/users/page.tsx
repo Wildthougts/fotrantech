@@ -1,7 +1,13 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from "react";
-import { FiUserPlus, FiUserMinus, FiRefreshCw } from "react-icons/fi";
+import { useEffect, useState, useCallback } from "react";
+import {
+  FiUserPlus,
+  FiUserMinus,
+  FiRefreshCw,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 
 interface User {
@@ -13,51 +19,62 @@ interface User {
   isAdmin: boolean;
 }
 
+const USERS_PER_PAGE = 10;
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+
+      const response = await fetch(
+        `/api/admin/users?page=${currentPage}&limit=${USERS_PER_PAGE}`,
+        {
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
         }
-      });
-      
+      );
+
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(text || 'Failed to fetch users');
+        throw new Error(text || "Failed to fetch users");
       }
-      
+
       const data = await response.json();
-      setUsers(data);
+      setUsers(data.users);
+      setTotalUsers(data.total);
     } catch (error) {
-      console.error('Error fetching users:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load users');
-      toast.error('Failed to load users');
+      console.error("Error fetching users:", error);
+      setError(error instanceof Error ? error.message : "Failed to load users");
+      toast.error("Failed to load users");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
-  const handleToggleAdmin = async (userId: string, isCurrentlyAdmin: boolean) => {
+  const handleToggleAdmin = async (
+    userId: string,
+    isCurrentlyAdmin: boolean
+  ) => {
     try {
       const response = await fetch(
-        `/api/admin/users${isCurrentlyAdmin ? `?id=${userId}` : ''}`,
+        `/api/admin/users${isCurrentlyAdmin ? `?id=${userId}` : ""}`,
         {
-          method: isCurrentlyAdmin ? 'DELETE' : 'POST',
+          method: isCurrentlyAdmin ? "DELETE" : "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: isCurrentlyAdmin ? undefined : JSON.stringify({ userId }),
         }
@@ -65,14 +82,20 @@ export default function AdminUsersPage() {
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(text || `Failed to ${isCurrentlyAdmin ? 'remove' : 'add'} admin`);
+        throw new Error(
+          text || `Failed to ${isCurrentlyAdmin ? "remove" : "add"} admin`
+        );
       }
 
-      toast.success(`Successfully ${isCurrentlyAdmin ? 'removed' : 'added'} admin role`);
+      toast.success(
+        `Successfully ${isCurrentlyAdmin ? "removed" : "added"} admin role`
+      );
       fetchUsers();
     } catch (error) {
-      console.error('Error toggling admin status:', error);
-      toast.error(`Failed to ${isCurrentlyAdmin ? 'remove' : 'add'} admin role`);
+      console.error("Error toggling admin status:", error);
+      toast.error(
+        `Failed to ${isCurrentlyAdmin ? "remove" : "add"} admin role`
+      );
     }
   };
 
@@ -102,6 +125,8 @@ export default function AdminUsersPage() {
       </div>
     );
   }
+
+  const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -153,8 +178,8 @@ export default function AdminUsersPage() {
                     onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
                     className={`inline-flex items-center px-3 py-1 rounded text-sm font-medium ${
                       user.isAdmin
-                        ? 'text-red-700 hover:text-red-900'
-                        : 'text-green-700 hover:text-green-900'
+                        ? "text-red-700 hover:text-red-900"
+                        : "text-green-700 hover:text-green-900"
                     }`}
                   >
                     {user.isAdmin ? (
@@ -174,14 +199,81 @@ export default function AdminUsersPage() {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td
+                  colSpan={4}
+                  className="px-6 py-4 text-center text-sm text-gray-500"
+                >
                   No users found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+
+        {/* Pagination Controls */}
+        <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() =>
+                setCurrentPage((page) => Math.min(totalPages, page + 1))
+              }
+              disabled={currentPage === totalPages}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing{" "}
+                <span className="font-medium">
+                  {(currentPage - 1) * USERS_PER_PAGE + 1}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium">
+                  {Math.min(currentPage * USERS_PER_PAGE, totalUsers)}
+                </span>{" "}
+                of <span className="font-medium">{totalUsers}</span> results
+              </p>
+            </div>
+            <div>
+              <nav
+                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                aria-label="Pagination"
+              >
+                <button
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <span className="sr-only">Previous</span>
+                  <FiChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <span className="sr-only">Next</span>
+                  <FiChevronRight className="h-5 w-5" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
-} 
+}
