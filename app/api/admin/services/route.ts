@@ -4,12 +4,12 @@ import { currentUser } from "@clerk/nextjs/server";
 import { logAction } from "@/utils/logger";
 import { rateLimit } from "@/middleware/rateLimit";
 import { isAdmin } from "@/utils/admin";
-import { deleteService, createService } from "@/utils/services";
+import { deleteService, createService, getAllServices } from "@/utils/services";
 
 async function checkAdminAccess() {
   const user = await currentUser();
   if (!user) {
-    return { isAdmin: false, userId: undefined };
+    return { isAdmin: false, userId: null };
   }
 
   const isUserAdmin = await isAdmin(user.id);
@@ -25,7 +25,7 @@ export async function GET() {
           "warn",
           "read",
           "services",
-          "Unauthorized access attempt",
+          "Unauthorized read attempt",
           {
             userId,
           }
@@ -34,26 +34,8 @@ export async function GET() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { data: services, error } = await supabase
-      .from("services")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      if (userId) {
-        await logAction(
-          "error",
-          "read",
-          "services",
-          "Error fetching services",
-          {
-            userId,
-            metadata: { error: error.message },
-          }
-        );
-      }
-      return new NextResponse("Internal Server Error", { status: 500 });
-    }
+    // Get all non-deleted services
+    const services = await getAllServices(false);
 
     if (userId) {
       await logAction(

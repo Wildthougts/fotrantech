@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 export interface Service {
   id: string;
@@ -16,12 +16,12 @@ export interface Service {
 export async function getAllServices(includeDeleted = false) {
   try {
     let query = supabase
-      .from('services')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from("services")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (!includeDeleted) {
-      query = query.is('deleted_at', null);
+      query = query.is("deleted_at", null);
     }
 
     const { data, error } = await query;
@@ -29,7 +29,7 @@ export async function getAllServices(includeDeleted = false) {
     if (error) throw error;
     return data as Service[];
   } catch (error) {
-    console.error('Error fetching services:', error);
+    console.error("Error fetching services:", error);
     throw error;
   }
 }
@@ -37,24 +37,26 @@ export async function getAllServices(includeDeleted = false) {
 export async function getActiveServices() {
   try {
     const { data, error } = await supabase
-      .from('services')
-      .select('*')
-      .is('deleted_at', null)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .from("services")
+      .select("*")
+      .is("deleted_at", null)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data as Service[];
   } catch (error) {
-    console.error('Error fetching active services:', error);
+    console.error("Error fetching active services:", error);
     throw error;
   }
 }
 
-export async function createService(service: Omit<Service, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>) {
+export async function createService(
+  service: Omit<Service, "id" | "created_at" | "updated_at" | "deleted_at">
+) {
   try {
     const { data, error } = await supabase
-      .from('services')
+      .from("services")
       .insert([service])
       .select()
       .single();
@@ -62,7 +64,7 @@ export async function createService(service: Omit<Service, 'id' | 'created_at' |
     if (error) throw error;
     return data as Service;
   } catch (error) {
-    console.error('Error creating service:', error);
+    console.error("Error creating service:", error);
     throw error;
   }
 }
@@ -70,17 +72,17 @@ export async function createService(service: Omit<Service, 'id' | 'created_at' |
 export async function updateService(id: string, updates: Partial<Service>) {
   try {
     const { data, error } = await supabase
-      .from('services')
+      .from("services")
       .update(updates)
-      .eq('id', id)
-      .is('deleted_at', null)
+      .eq("id", id)
+      .is("deleted_at", null)
       .select()
       .single();
 
     if (error) throw error;
     return data as Service;
   } catch (error) {
-    console.error('Error updating service:', error);
+    console.error("Error updating service:", error);
     throw error;
   }
 }
@@ -88,17 +90,17 @@ export async function updateService(id: string, updates: Partial<Service>) {
 export async function deleteService(id: string) {
   try {
     const { error } = await supabase
-      .from('services')
-      .update({ 
+      .from("services")
+      .update({
         deleted_at: new Date().toISOString(),
-        is_active: false 
+        is_active: false,
       })
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error('Error deleting service:', error);
+    console.error("Error deleting service:", error);
     throw error;
   }
 }
@@ -106,17 +108,17 @@ export async function deleteService(id: string) {
 export async function toggleServiceStatus(id: string, currentStatus: boolean) {
   try {
     const { data, error } = await supabase
-      .from('services')
+      .from("services")
       .update({ is_active: !currentStatus })
-      .eq('id', id)
-      .is('deleted_at', null)
+      .eq("id", id)
+      .is("deleted_at", null)
       .select()
       .single();
 
     if (error) throw error;
     return data as Service;
   } catch (error) {
-    console.error('Error toggling service status:', error);
+    console.error("Error toggling service status:", error);
     throw error;
   }
-} 
+}
