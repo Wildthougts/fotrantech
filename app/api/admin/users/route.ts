@@ -5,8 +5,17 @@ import { isAdmin } from "@/utils/admin";
 import { getClerkUsers } from "@/utils/clerk";
 import { logAction } from "@/utils/logger";
 
+interface User {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  createdAt: Date;
+  isAdmin: boolean;
+}
+
 // Add CSV generation function
-function generateCSV(users: any[]) {
+function generateCSV(users: User[]) {
   const headers = [
     "ID",
     "Email",
