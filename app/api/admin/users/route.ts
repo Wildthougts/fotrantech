@@ -59,16 +59,15 @@ export async function GET(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Get all users from Clerk
+    const allUsers = await getClerkUsers();
+
+    // Check if CSV format is requested
     const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get("page") || "1");
-    const limit = parseInt(url.searchParams.get("limit") || "10");
     const format = url.searchParams.get("format");
 
-    const users = await getClerkUsers();
-
-    // If CSV format is requested, return all users as CSV
     if (format === "csv") {
-      const csv = generateCSV(users);
+      const csv = generateCSV(allUsers);
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv",
@@ -79,10 +78,14 @@ export async function GET(request: Request) {
       });
     }
 
-    // Calculate pagination
+    // Handle pagination
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "10");
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    const paginatedUsers = users.slice(startIndex, endIndex);
+
+    // Slice the users array for the requested page
+    const paginatedUsers = allUsers.slice(startIndex, endIndex);
 
     await logAction("info", "read", "users", "Successfully fetched users", {
       userId: user.id,
@@ -90,9 +93,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       users: paginatedUsers,
-      total: users.length,
+      total: allUsers.length,
       page,
-      totalPages: Math.ceil(users.length / limit),
+      totalPages: Math.ceil(allUsers.length / limit),
     });
   } catch (error) {
     console.error("Error in GET /api/admin/users:", error);
