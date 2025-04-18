@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/utils/supabase';
-import { currentUser } from '@clerk/nextjs/server';
-import { logAction } from '@/utils/logger';
-import { rateLimit } from '@/middleware/rateLimit';
-import { isAdmin } from '@/utils/admin';
-import { deleteService, createService } from '@/utils/services';
+import { NextResponse } from "next/server";
+import { supabase } from "@/utils/supabase";
+import { currentUser } from "@clerk/nextjs/server";
+import { logAction } from "@/utils/logger";
+import { rateLimit } from "@/middleware/rateLimit";
+import { isAdmin } from "@/utils/admin";
+import { deleteService, createService } from "@/utils/services";
 
 async function checkAdminAccess() {
   const user = await currentUser();
@@ -20,35 +20,57 @@ export async function GET() {
   try {
     const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
     if (!isUserAdmin) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      if (userId) {
+        await logAction(
+          "warn",
+          "read",
+          "services",
+          "Unauthorized access attempt",
+          {
+            userId,
+          }
+        );
+      }
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const { data: services, error } = await supabase
-      .from('services')
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
+      .from("services")
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
       if (userId) {
-        await logAction('error', 'read', 'services', 'Error fetching services', {
-          userId,
-          metadata: { error: error.message }
-        });
+        await logAction(
+          "error",
+          "read",
+          "services",
+          "Error fetching services",
+          {
+            userId,
+            metadata: { error: error.message },
+          }
+        );
       }
-      return new NextResponse('Internal Server Error', { status: 500 });
+      return new NextResponse("Internal Server Error", { status: 500 });
     }
 
     if (userId) {
-      await logAction('info', 'read', 'services', 'Successfully fetched services', {
-        userId
-      });
+      await logAction(
+        "info",
+        "read",
+        "services",
+        "Successfully fetched services",
+        {
+          userId,
+        }
+      );
     }
 
     return NextResponse.json(services);
   } catch (error) {
-    console.error('Error in GET /api/admin/services:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error("Error in GET /api/admin/services:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
@@ -57,57 +79,71 @@ export async function DELETE(request: Request) {
     const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
     if (!isUserAdmin) {
       if (userId) {
-        await logAction('warn', 'delete', 'services', 'Unauthorized delete attempt', {
-          userId
-        });
+        await logAction(
+          "warn",
+          "delete",
+          "services",
+          "Unauthorized delete attempt",
+          {
+            userId,
+          }
+        );
       }
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     if (!userId) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     // Check rate limit
-    const rateLimitResult = await rateLimit(userId, 'delete_service');
+    const rateLimitResult = await rateLimit(userId, "delete_service");
     if (!rateLimitResult.success) {
-      await logAction('warn', 'delete', 'services', 'Rate limit exceeded', {
+      await logAction("warn", "delete", "services", "Rate limit exceeded", {
         userId,
-        metadata: { remaining: rateLimitResult.remaining }
+        metadata: { remaining: rateLimitResult.remaining },
       });
-      return new NextResponse('Rate limit exceeded', { status: 429 });
+      return new NextResponse("Rate limit exceeded", { status: 429 });
     }
 
     const { searchParams } = new URL(request.url);
-    const serviceId = searchParams.get('id');
+    const serviceId = searchParams.get("id");
 
     if (!serviceId) {
-      await logAction('warn', 'delete', 'services', 'Missing service ID', {
-        userId
+      await logAction("warn", "delete", "services", "Missing service ID", {
+        userId,
       });
-      return new NextResponse('Service ID is required', { status: 400 });
+      return new NextResponse("Service ID is required", { status: 400 });
     }
 
     try {
       await deleteService(serviceId);
-      
-      await logAction('info', 'delete', 'services', 'Service successfully deleted', {
-        userId,
-        resourceId: serviceId
-      });
+
+      await logAction(
+        "info",
+        "delete",
+        "services",
+        "Service successfully deleted",
+        {
+          userId,
+          resourceId: serviceId,
+        }
+      );
 
       return new NextResponse(null, { status: 204 });
     } catch (error) {
-      await logAction('error', 'delete', 'services', 'Error deleting service', {
+      await logAction("error", "delete", "services", "Error deleting service", {
         userId,
         resourceId: serviceId,
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+        metadata: {
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
       });
-      return new NextResponse('Failed to delete service', { status: 500 });
+      return new NextResponse("Failed to delete service", { status: 500 });
     }
   } catch (error) {
-    console.error('Error in DELETE /api/admin/services:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error("Error in DELETE /api/admin/services:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
@@ -116,52 +152,64 @@ export async function PATCH(request: Request) {
     const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
     if (!isUserAdmin) {
       if (userId) {
-        await logAction('warn', 'update', 'services', 'Unauthorized update attempt', {
-          userId
-        });
+        await logAction(
+          "warn",
+          "update",
+          "services",
+          "Unauthorized update attempt",
+          {
+            userId,
+          }
+        );
       }
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     if (!userId) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const serviceId = searchParams.get('id');
+    const serviceId = searchParams.get("id");
     const body = await request.json();
 
     if (!serviceId) {
-      await logAction('warn', 'update', 'services', 'Missing service ID', {
-        userId
+      await logAction("warn", "update", "services", "Missing service ID", {
+        userId,
       });
-      return new NextResponse('Service ID is required', { status: 400 });
+      return new NextResponse("Service ID is required", { status: 400 });
     }
 
     const { error } = await supabase
-      .from('services')
+      .from("services")
       .update(body)
-      .eq('id', serviceId)
-      .is('deleted_at', null);
+      .eq("id", serviceId)
+      .is("deleted_at", null);
 
     if (error) {
-      await logAction('error', 'update', 'services', 'Error updating service', {
+      await logAction("error", "update", "services", "Error updating service", {
         userId,
         resourceId: serviceId,
-        metadata: { error: error.message }
+        metadata: { error: error.message },
       });
-      return new NextResponse('Internal Server Error', { status: 500 });
+      return new NextResponse("Internal Server Error", { status: 500 });
     }
 
-    await logAction('info', 'update', 'services', 'Service successfully updated', {
-      userId,
-      resourceId: serviceId
-    });
+    await logAction(
+      "info",
+      "update",
+      "services",
+      "Service successfully updated",
+      {
+        userId,
+        resourceId: serviceId,
+      }
+    );
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error('Error in PATCH /api/admin/services:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error("Error in PATCH /api/admin/services:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
@@ -170,37 +218,51 @@ export async function POST(request: Request) {
     const { isAdmin: isUserAdmin, userId } = await checkAdminAccess();
     if (!isUserAdmin) {
       if (userId) {
-        await logAction('warn', 'create', 'services', 'Unauthorized create attempt', {
-          userId
-        });
+        await logAction(
+          "warn",
+          "create",
+          "services",
+          "Unauthorized create attempt",
+          {
+            userId,
+          }
+        );
       }
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     if (!userId) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const serviceData = await request.json();
 
     try {
       const newService = await createService(serviceData);
-      
-      await logAction('info', 'create', 'services', 'Service successfully created', {
-        userId,
-        resourceId: newService.id
-      });
+
+      await logAction(
+        "info",
+        "create",
+        "services",
+        "Service successfully created",
+        {
+          userId,
+          resourceId: newService.id,
+        }
+      );
 
       return NextResponse.json(newService);
     } catch (error) {
-      await logAction('error', 'create', 'services', 'Error creating service', {
+      await logAction("error", "create", "services", "Error creating service", {
         userId,
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+        metadata: {
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
       });
-      return new NextResponse('Failed to create service', { status: 500 });
+      return new NextResponse("Failed to create service", { status: 500 });
     }
   } catch (error) {
-    console.error('Error in POST /api/admin/services:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error("Error in POST /api/admin/services:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}

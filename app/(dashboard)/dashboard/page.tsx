@@ -29,7 +29,7 @@ async function DashboardPage() {
     .from("services")
     .select("*")
     .eq("is_active", true)
-    .limit(6);
+    .order("created_at", { ascending: false });
 
   return (
     <>

@@ -14,10 +14,23 @@ export default function AdminServicesPage() {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch("/api/admin/services");
+      setLoading(true);
+      const response = await fetch("/api/admin/services", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store", // Ensure we always get fresh data
+      });
+
       if (!response.ok) throw new Error("Failed to fetch services");
       const data = await response.json();
-      setServices(data);
+
+      // Filter out any null entries and soft-deleted services
+      const filteredServices = data.filter(
+        (service: Service) => service && !service.deleted_at
+      );
+
+      setServices(filteredServices);
     } catch (error) {
       toast.error("Error loading services");
       console.error(error);
